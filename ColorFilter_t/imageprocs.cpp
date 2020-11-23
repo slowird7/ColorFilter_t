@@ -1,4 +1,5 @@
 ﻿#include "stdafx.h"
+#include <string>
 #include "imageprocs.h"
 
 
@@ -8,7 +9,7 @@ const int MIN_NO_OF_CONTOUR = 50;	// <-- これ以下だと少な過ぎ
 const int MINIMAL_CONTOUR_SIZE = 40;	// この値以下の contour はノイズと見做して無視する
 
 color_filter g_filter;
-Point reserve1, reserve2, topReserve1, topReserve2;
+cv::Point reserve1, reserve2, topReserve1, topReserve2;
 
 										
 /** FitLines
@@ -21,9 +22,9 @@ Point reserve1, reserve2, topReserve1, topReserve2;
 *
 *
 */
-void FitLines(Mat fit, Point& contoursP1, Point& contoursP2, Point& topResult1, Point& topResult2, boolean first, Mat& input_image_rgb) {
-	vector<Vec4i> hierarchy;
-	Mat contours_img;
+void FitLines(cv::Mat fit, cv::Point& contoursP1, cv::Point& contoursP2, cv::Point& topResult1, cv::Point& topResult2, boolean first, cv::Mat& input_image_rgb) {
+	vector<cv::Vec4i> hierarchy;
+	cv::Mat contours_img;
 
 	input_image_rgb.copyTo(contours_img);
 
@@ -31,12 +32,12 @@ void FitLines(Mat fit, Point& contoursP1, Point& contoursP2, Point& topResult1, 
 	double max_area = 0., min_area = 0.;
 	int max_area_contour = -1, min_area_cotour = -1;
 
-	vector<vector<Point>> contours;
+	vector<vector<cv::Point>> contours;
 
-	findContours(fit, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-	cout << "no of contours =" << contours.size() << std::endl;
+	cv::findContours(fit, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+	std::cout << "no of contours =" << contours.size() << std::endl;
 
-	vector<vector<Point> > contours_subset;
+	vector<vector<cv::Point> > contours_subset;
 	int max_size = 0;
 	for (int j = 0; j < contours.size(); j++) {
 		int contourSize = contours.at(j).size();
@@ -47,8 +48,8 @@ void FitLines(Mat fit, Point& contoursP1, Point& contoursP2, Point& topResult1, 
 			}
 		}
 	}
-	cout << "size of contours_subset=" << contours_subset.size() << std::endl;
-	cout << "max contour_subset.size=" << max_size << std::endl;
+	std::cout << "size of contours_subset=" << contours_subset.size() << std::endl;
+	std::cout << "max contour_subset.size=" << max_size << std::endl;
 
 	for (int j = 0; j < contours_subset.size(); j++) {
 		int count = contours_subset.at(j).size();
@@ -60,16 +61,16 @@ void FitLines(Mat fit, Point& contoursP1, Point& contoursP2, Point& topResult1, 
 		}
 		x /= count;
 		y /= count;
-		cout << "contour_subset[" << j << "].x=" << x << " y=" << y << std::endl;
-		circle(contours_img, Point(x, y), 50, Scalar(0, 0, 255), 3, 4);
-		drawContours(contours_img, contours_subset, -1, Scalar(0, 255, 0), 1);
+		std::cout << "contour_subset[" << j << "].x=" << x << " y=" << y << std::endl;
+		cv::circle(contours_img, cv::Point(x, y), 50, cv::Scalar(0, 0, 255), 3, 4);
+		cv::drawContours(contours_img, contours_subset, -1, cv::Scalar(0, 255, 0), 1);
 
-		Vec4f fitlines;
+		cv::Vec4f fitlines;
 		double inclination;
 		int incX, incY;
 		int coun = 0;
-		vector<Vec4i> conReslt;
-		Point startPoint, endPoint;
+		vector<cv::Vec4i> conReslt;
+		cv::Point startPoint, endPoint;
 
 		/** @brief contour に含まれる各点から該直線までの「距離の二乗」の和が最小になるような直線を求める
 		@parmeter
@@ -136,9 +137,9 @@ void FitLines(Mat fit, Point& contoursP1, Point& contoursP2, Point& topResult1, 
 
 }
 
-void FitLines2(Mat fit, Point& contoursP1, Point& contoursP2, Point& topResult1, Point& topResult2, boolean first, Mat& input_image_rgb) {
-	vector<Vec4i> hierarchy;
-	Mat contours_img;
+void FitLines2(cv::Mat fit, cv::Point& contoursP1, cv::Point& contoursP2, cv::Point& topResult1, cv::Point& topResult2, boolean first, cv::Mat& input_image_rgb) {
+	vector<cv::Vec4i> hierarchy;
+	cv::Mat contours_img;
 
 	input_image_rgb.copyTo(contours_img);
 
@@ -147,13 +148,13 @@ void FitLines2(Mat fit, Point& contoursP1, Point& contoursP2, Point& topResult1,
 	int max_area_contour = -1, min_area_cotour = -1;
 
 
-	vector<vector<Point>> contours;
+	vector<vector<cv::Point>> contours;
 
-	findContours(fit, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+	cv::findContours(fit, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 	cout << "no of contours =" << contours.size() << std::endl;
 
-	vector<vector<Point> > contours_subset;
-	vector<Point> contours_merged;
+	vector<vector<cv::Point> > contours_subset;
+	vector<cv::Point> contours_merged;
 	int max_size = 0;
 	int max_contour_id = -1;
 	for (int j = 0; j < contours.size(); j++) {
@@ -181,16 +182,16 @@ void FitLines2(Mat fit, Point& contoursP1, Point& contoursP2, Point& topResult1,
 		x /= count;
 		y /= count;
 		cout << "contour_subset[" << j << "].x=" << x << " y=" << y << std::endl;
-		circle(contours_img, Point(x, y), 50, Scalar(0, 0, 255), 3, 4);
-		drawContours(contours_img, contours_subset, -1, Scalar(0, 255, 0), 1);
+		cv::circle(contours_img, cv::Point(x, y), 50, cv::Scalar(0, 0, 255), 3, 4);
+		cv::drawContours(contours_img, contours_subset, -1, cv::Scalar(0, 255, 0), 1);
 	} // foreach (contours_subset)
 
-	Vec4f fitlines;
+	cv::Vec4f fitlines;
 	double inclination;
 	int incX, incY;
 	int coun = 0;
-	vector<Vec4i> conReslt;
-	Point startPoint, endPoint;
+	vector<cv::Vec4i> conReslt;
+	cv::Point startPoint, endPoint;
 	  
 	/** @brief contour に含まれる各点から該直線までの「距離の二乗」の和が最小になるような直線を求める
 	@parmeter
@@ -263,12 +264,12 @@ void FitLines2(Mat fit, Point& contoursP1, Point& contoursP2, Point& topResult1,
 *
 *
 */
-vector<Vec4i>  selectLabel(Point a, Point b, vector<Vec4i> masksss) {
-	vector<Vec4i> resultP;
+vector<cv::Vec4i>  selectLabel(cv::Point a, cv::Point b, vector<cv::Vec4i> masksss) {
+	vector<cv::Vec4i> resultP;
 	//Mat Dst;
 	//input_image_rgb.copyTo(Dst);
 
-	Point c;
+	cv::Point c;
 	c.x = (a.x + b.x) / 2;
 	c.y = (a.y + b.y) / 2;
 
@@ -334,8 +335,8 @@ vector<Vec4i>  selectLabel(Point a, Point b, vector<Vec4i> masksss) {
 
 }
 
-vector<Vec4i>  selectLabelOnTheLine(Point a, Point b, vector<Vec4i> masksss) {
-	vector<Vec4i> masksOnTheLine;
+vector<cv::Vec4i>  selectLabelOnTheLine(cv::Point a, cv::Point b, vector<cv::Vec4i> masksss) {
+	vector<cv::Vec4i> masksOnTheLine;
 
 	int indexOfMostLeftLabel = -1;
 	double leftOfMostLeftLabel = DBL_MAX;
@@ -359,15 +360,15 @@ vector<Vec4i>  selectLabelOnTheLine(Point a, Point b, vector<Vec4i> masksss) {
 }
 
 //スキンプレート
-Mat createMask(Mat laser_image_hsv, color_filter filter, boolean fine) {
-	Mat mask_image;
+cv::Mat createMask(cv::Mat laser_image_hsv, color_filter filter, boolean fine) {
+	cv::Mat mask_image;
 	//double sigma = 0;
 	//cv::Mat gaussian;
 	//cv::GaussianBlur(laser_image, gaussian, cv::Size(filtersize, filtersize), sigma);
 	//cv::imwrite("gaussian.png", gaussian);
 
-	vector<Vec4i> hierarchy;
-	vector<vector<Point>> contours;
+	vector<cv::Vec4i> hierarchy;
+	vector<vector<cv::Point>> contours;
 	double dvmin = (filter.v_max - filter.v_min) / 2;
 	double v_min_skin = (filter.v_max + filter.v_min) / 2;
 	int max_no_of_contour = MAX_NO_OF_CONTOUR;
@@ -380,18 +381,18 @@ Mat createMask(Mat laser_image_hsv, color_filter filter, boolean fine) {
 	//inRange(gaussian, cv::Scalar(h_max, s_min, v_min), cv::Scalar(179, s_max, v_max), upper_red_hue_range);
 	//inRange(gaussian, cv::Scalar(0, s_min, v_min), cv::Scalar(h_min, s_max, v_max), lower_red_hue_range);
 	while (true) {
-		Mat lower_red_hue_range, upper_red_hue_range;
+		cv::Mat lower_red_hue_range, upper_red_hue_range;
 
 		if (filter.h_min <= filter.h_max) {
-			inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_skin), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), mask_image);
+			cv::inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_skin), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), mask_image);
 		}
 		else {
-			inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_skin), cv::Scalar(180., filter.s_max, filter.v_max), lower_red_hue_range);
-			inRange(laser_image_hsv, cv::Scalar(0., filter.s_min, v_min_skin), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), upper_red_hue_range);
-			add(lower_red_hue_range, upper_red_hue_range, mask_image);
+			cv::inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_skin), cv::Scalar(180., filter.s_max, filter.v_max), lower_red_hue_range);
+			cv::inRange(laser_image_hsv, cv::Scalar(0., filter.s_min, v_min_skin), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), upper_red_hue_range);
+			cv::add(lower_red_hue_range, upper_red_hue_range, mask_image);
 		}
 
-		findContours(mask_image, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+		cv::findContours(mask_image, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 		cout << "createMask> v_min_skin=" << v_min_skin << " contours.size()=" << contours.size() << std::endl;
 
 		if (dvmin < 1) {
@@ -417,11 +418,11 @@ Mat createMask(Mat laser_image_hsv, color_filter filter, boolean fine) {
 }
 
 //セグメント
-Mat LineMaskForDrawAxis(Mat laser_image_hsv, color_filter filter, double min_contour_size, boolean fine) {
-	Mat mask_image;
+cv::Mat LineMaskForDrawAxis(cv::Mat laser_image_hsv, color_filter filter, double min_contour_size, boolean fine) {
+	cv::Mat mask_image;
 	double sigma = 0;
-	vector<Vec4i> hierarchy;
-	vector<vector<Point>> contours;
+	vector<cv::Vec4i> hierarchy;
+	vector<vector<cv::Point>> contours;
 	double dvmin = (filter.v_max - filter.v_min) / 20;
 	double v_min_segment = filter.v_max - dvmin;
 	int max_no_of_contour = MAX_NO_OF_CONTOUR;
@@ -432,17 +433,17 @@ Mat LineMaskForDrawAxis(Mat laser_image_hsv, color_filter filter, double min_con
 	}
 
 	while (true) {
-		Mat lower_red_hue_range, upper_red_hue_range;
+		cv::Mat lower_red_hue_range, upper_red_hue_range;
 
 		if (filter.h_min <= filter.h_max) {
-			inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_segment), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), mask_image);
+			cv::inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_segment), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), mask_image);
 		}
 		else {
-			inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_segment), cv::Scalar(180., filter.s_max, filter.v_max), lower_red_hue_range);
-			inRange(laser_image_hsv, cv::Scalar(0., filter.s_min, v_min_segment), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), upper_red_hue_range);
-			add(lower_red_hue_range, upper_red_hue_range, mask_image);
+			cv::inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_segment), cv::Scalar(180., filter.s_max, filter.v_max), lower_red_hue_range);
+			cv::inRange(laser_image_hsv, cv::Scalar(0., filter.s_min, v_min_segment), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), upper_red_hue_range);
+			cv::add(lower_red_hue_range, upper_red_hue_range, mask_image);
 		}
-		findContours(mask_image, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+		cv::findContours(mask_image, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 		cout << "LineMaskForDrawAxis> v_min_segment=" << v_min_segment << " contours.size()=" << contours.size() << std::endl;
 		double largest_contouur_size = 0.;
 		int largest_contour_no = -1;
@@ -474,28 +475,28 @@ Mat LineMaskForDrawAxis(Mat laser_image_hsv, color_filter filter, double min_con
 	return mask_image;
 }
 
-Mat LineMaskForDetectSegmentEdge(Mat laser_image_hsv, color_filter filter, double min_contour_size, boolean fine) {
-	Mat mask_image;
+cv::Mat LineMaskForDetectSegmentEdge(cv::Mat laser_image_hsv, color_filter filter, double min_contour_size, boolean fine) {
+	cv::Mat mask_image;
 	double sigma = 0;
-	vector<Vec4i> hierarchy;
-	vector<vector<Point>> contours;
+	vector<cv::Vec4i> hierarchy;
+	vector<vector<cv::Point>> contours;
 	double dvmin = (filter.v_max - filter.v_min) / 2;
 	double v_min_segment = (filter.v_max + filter.v_min) / 2.;
 	int max_no_of_contour = MAX_NO_OF_CONTOUR;
 	int min_no_of_contour = MIN_NO_OF_CONTOUR;
 
 	while (true) {
-		Mat lower_red_hue_range, upper_red_hue_range;
+		cv::Mat lower_red_hue_range, upper_red_hue_range;
 
 		if (filter.h_min <= filter.h_max) {
-			inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_segment), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), mask_image);
+			cv::inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_segment), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), mask_image);
 		}
 		else {
-			inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_segment), cv::Scalar(180., filter.s_max, filter.v_max), lower_red_hue_range);
-			inRange(laser_image_hsv, cv::Scalar(0., filter.s_min, v_min_segment), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), upper_red_hue_range);
-			add(lower_red_hue_range, upper_red_hue_range, mask_image);
+			cv::inRange(laser_image_hsv, cv::Scalar(filter.h_min, filter.s_min, v_min_segment), cv::Scalar(180., filter.s_max, filter.v_max), lower_red_hue_range);
+			cv::inRange(laser_image_hsv, cv::Scalar(0., filter.s_min, v_min_segment), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), upper_red_hue_range);
+			cv::add(lower_red_hue_range, upper_red_hue_range, mask_image);
 		}
-		findContours(mask_image, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+		cv::findContours(mask_image, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 		cout << "LineMaskForDetectSegmentEdge> v_min_segment=" << v_min_segment << " contours.size()=" << contours.size() << std::endl;
 
 		if (dvmin < 0) {
@@ -522,13 +523,13 @@ Mat LineMaskForDetectSegmentEdge(Mat laser_image_hsv, color_filter filter, doubl
 *    a スキンプレート側線分とセグメント側線分の座標データ
 *	 PCross 交点
 */
-int Distance(vector<Vec4i> a, Point& PCross, Point& PSegmentEdge, vector<Vec4i> mask)
+int Distance(vector<cv::Vec4i> a, cv::Point& PCross, cv::Point& PSegmentEdge, vector<cv::Vec4i> mask)
 {
 
 	//int num, *param1, *param2 = 0;
 	double diff = 0;
 
-	Point P1, P2, P3, P4, tmp;
+	cv::Point P1, P2, P3, P4, tmp;
 
 	P1.x = a[0][2];
 	P1.y = a[0][3];
@@ -574,7 +575,7 @@ int Distance(vector<Vec4i> a, Point& PCross, Point& PSegmentEdge, vector<Vec4i> 
 	PSegmentEdge.x = 0.;
 	PSegmentEdge.y = 0.;
 
-	vector<Vec4i> resultP = selectLabelOnTheLine(P2, P1, mask);
+	vector<cv::Vec4i> resultP = selectLabelOnTheLine(P2, P1, mask);
 	if (resultP.size() > 0) {
 		diff = resultP[0][0] - PCross.x;
 		PSegmentEdge.x = resultP[0][0];
@@ -598,8 +599,8 @@ int Distance(vector<Vec4i> a, Point& PCross, Point& PSegmentEdge, vector<Vec4i> 
 *
 *
 */
-void checkDuplicate(Mat input_image, vector<Vec4i>& labels) {
-	Mat sg_image, sg_stats, sg_centroids;
+void checkDuplicate(cv::Mat input_image, vector<cv::Vec4i>& labels) {
+	cv::Mat sg_image, sg_stats, sg_centroids;
 
 	std::array<int, 100000> number;
 	int x, y, height, width;
@@ -636,5 +637,55 @@ void checkDuplicate(Mat input_image, vector<Vec4i>& labels) {
 		//cv::rectangle(Dst, cv::Rect(x, y, width, height), cv::Scalar(0, 255, 0), 2);
 	}
 	cv::imwrite("sg_Lablig.png", Dst);
+}
+
+cv::Mat filterImageByHSV(cv::Mat input_hsv, color_filter filter)
+{
+	cv::Mat filtered_image;
+	cv::Mat lower_red_hue_range, upper_red_hue_range;
+
+	if (filter.h_min <= filter.h_max) {
+		cv::inRange(input_hsv, cv::Scalar(filter.h_min, filter.s_min, filter.v_min), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), filtered_image);
+	}
+	else {
+		cv::inRange(input_hsv, cv::Scalar(filter.h_min, filter.s_min, filter.v_min), cv::Scalar(180., filter.s_max, filter.v_max), lower_red_hue_range);
+		cv::inRange(input_hsv, cv::Scalar(0., filter.s_min, filter.v_min), cv::Scalar(filter.h_max, filter.s_max, filter.v_max), upper_red_hue_range);
+		cv::add(lower_red_hue_range, upper_red_hue_range, filtered_image);
+	}
+	return filtered_image;
+}
+
+vector<contourEx> findContourOfLaserReflection(cv::Mat input_hsv, double angle_min_degree, double angle_max_degree)
+{
+	vector<cv::Vec4i> hierarchy;
+	vector<vector<cv::Point>> contours_all;
+	vector<contourEx> contours;
+	contourEx* largest_contour_ptr;
+	double largest_size = -1;
+	cv::findContours(input_hsv, contours_all, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+
+	for (auto i : contours_all) {
+		if (i.size() <= 12) continue;
+
+		contourEx c = contourEx();
+		c.size = i.size();
+		for (cv::Point p : i) {
+			c.contour.push_back(p);
+		} 
+		c.rect = cv::minAreaRect(c.contour);
+		// 十分な大きさがあって、主軸が指定された向きを向いているならば候補リストに加える
+		printf("rect.size,angle=%d, %6.3f\n", c.size, c.rect.angle);
+		if (c.size > MINIMAL_CONTOUR_SIZE && c.rect.angle > angle_min_degree && c.rect.angle < angle_max_degree) {
+			contours.push_back(c);
+			// 最大？
+			if (c.size > largest_size) {
+				largest_size = c.size;
+				largest_contour_ptr = &c;
+			}
+		}
+	}
+	return contours;
+
+
 }
 

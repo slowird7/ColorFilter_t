@@ -772,113 +772,144 @@ int main(int argc, char** argv)
 	addWeighted(result_i, 1.0, result_l, -1.0, 0.0, laser_image);
 	cv::imwrite("LaserImage.png", laser_image);
 	cvtColor(laser_image, laser_image_hsv, CV_BGR2HSV, 3);
-	printf("laser_image_hsv dims:%d, depth:%d, channels:%d\n", laser_image_hsv.dims, laser_image_hsv.depth(), laser_image_hsv.channels());
-	printf("laser_image_hsv(900, 640)=%d, %d, %d\n", laser_image_hsv.at<Vec3b>(640, 900)[0], laser_image_hsv.at<Vec3b>(640, 900)[1], laser_image_hsv.at<Vec3b>(640, 900)[2]);
 
 	/***********************************************/
 	/* pass 1 画像全体をまとめて解析               */
 	/***********************************************/
+	Mat filteredImage;
+	Mat contourImage = Mat();
+	vector<contourEx> contours;
 
-	//セグメント側
-	mask_image = LineMaskForDrawAxis(laser_image_hsv, g_filter, 100, false);
-	cv::imwrite("SegMask.png", mask_image);
-	checkDuplicate(mask_image, labels);
-	FitLines(mask_image, contoursP1, contoursP2, topResult1, topResult2, true, input_image_rgb);
+	vector<contourEx> contoursOnSkinplates, contoursOnSegment,theContourOnSkinplate, theContourOnSegment;
 
-	// マスクを基に入力画像をフィルタリング
-	output_image.setTo(Scalar(0, 0, 0));
-	input_image_rgb.copyTo(output_image, mask_image);
-	saveParameter(true);
+	for (int v_min_slider = 255; v_min_slider > 0; v_min_slider -= 10) {
+		contourEx contourOnSkinplate, contourOnSegment;
+		g_filter.v_min = v_min_slider;
+		filteredImage = filterImageByHSV(laser_image_hsv, g_filter);
 
-	////スキンプレート側
-	mask_image = createMask(laser_image_hsv, g_filter, false);
-	cv::imwrite("SkinMask.png", mask_image);
-	checkDuplicate(mask_image, labels);
-	FitLines(mask_image, contoursP1, contoursP2, topResult1, topResult2, false, input_image_rgb);
-	
-	output_image.setTo(Scalar(0, 0, 0));
-	input_image_rgb.copyTo(output_image, mask_image);
-	saveParameter(false);
+		contours = findContourOfLaserReflection(filteredImage, -30.0, -10.0);
+		laser_image.copyTo(contourImage);
+		for (auto c : contours) 
+		{
+			cv::Point2f vertices[4];
+			c.rect.points(vertices);
+			for (int i = 0; i < 4; i++) {
+				cv::line(contourImage, vertices[i], vertices[(i + 1) % 4], cv::Scalar(0, 255, 255));
+			}
+		}
+		std::string fname = "ContourSkinplate";
+		fname += to_string(v_min_slider);
+		fname += ".png";
+		cv::imwrite(fname, contourImage);
+		//		contoursOnSkinplates.push_back(contourOnSkinplate);
+//		theContourOnSkinplate = selectBestContourOnSkinplate(contoursOnSkinplates);
 
-	std::vector<Vec4i> result = pickupLine(topLine, underLine);
-	if (result.size() == 0) {
-		Calculation(0);
+//		findContourOfLaserReflection(filteredImage, -5.0, 5.0);
+//		theContourOnSegment = selectBestContourOnSegment(contourOnSegment);
+//		contoursOnSegment.push_back(contourOnSegment);
 	}
-	else {
-		int diff = Distance(result, PCross, PSegmentEdge, labels);
-		Calculation(diff);
-	}
+
+
+	////セグメント側
+	//mask_image = LineMaskForDrawAxis(laser_image_hsv, g_filter, 100, false);
+	//cv::imwrite("SegMask.png", mask_image);
+	//checkDuplicate(mask_image, labels);
+	//FitLines(mask_image, contoursP1, contoursP2, topResult1, topResult2, true, input_image_rgb);
+
+	//// マスクを基に入力画像をフィルタリング
+	//output_image.setTo(Scalar(0, 0, 0));
+	//input_image_rgb.copyTo(output_image, mask_image);
+	//saveParameter(true);
+
+	//////スキンプレート側
+	//mask_image = createMask(laser_image_hsv, g_filter, false);
+	//cv::imwrite("SkinMask.png", mask_image);
+	//checkDuplicate(mask_image, labels);
+	//FitLines(mask_image, contoursP1, contoursP2, topResult1, topResult2, false, input_image_rgb);
+	//
+	//output_image.setTo(Scalar(0, 0, 0));
+	//input_image_rgb.copyTo(output_image, mask_image);
+	//saveParameter(false);
+
+	//std::vector<Vec4i> result = pickupLine(topLine, underLine);
+	//if (result.size() == 0) {
+	//	Calculation(0);
+	//}
+	//else {
+	//	int diff = Distance(result, PCross, PSegmentEdge, labels);
+	//	Calculation(diff);
+	//}
 
 	/***********************************************/
 	/* pass 2  画像をセグメント側とスキンプレート側に分けて別々に解析                                     */
 	/***********************************************/
 
-	//スキンプレート側
-	Mat laser_image_hsv_skin;
-	laser_image_hsv.copyTo(laser_image_hsv_skin);
-	rectangle(laser_image_hsv_skin, Rect(PCross.x, 0, laser_image_hsv_skin.cols, laser_image_hsv_skin.rows), cv::Scalar(0, 0, 0), -1);
-	imwrite("laser_image_hsv_skin.png", laser_image_hsv_skin);
-	mask_image = createMask(laser_image_hsv_skin, g_filter, false);
-	imwrite("SkinMask2.png", mask_image);
+//	//スキンプレート側
+//	Mat laser_image_hsv_skin;
+//	laser_image_hsv.copyTo(laser_image_hsv_skin);
+//	rectangle(laser_image_hsv_skin, Rect(PCross.x, 0, laser_image_hsv_skin.cols, laser_image_hsv_skin.rows), cv::Scalar(0, 0, 0), -1);
+//	imwrite("laser_image_hsv_skin.png", laser_image_hsv_skin);
+//	mask_image = createMask(laser_image_hsv_skin, g_filter, false);
+//	imwrite("SkinMask2.png", mask_image);
+////	checkDuplicate(mask_image, labels);
+//	FitLines2(mask_image, contoursP1, contoursP2, topResult1, topResult2, false, input_image_rgb);
+//	
+//	output_image.setTo(Scalar(0, 0, 0));
+//	input_image_rgb.copyTo(output_image, mask_image);
+//	saveParameter(false);
+//
+//	//セグメント側
+//	Mat laser_image_hsv_segment;
+//
+//	laser_image_hsv.copyTo(laser_image_hsv_segment);
+//	rectangle(laser_image_hsv_segment, cv::Rect(0, 0, PCross.x, laser_image_hsv_segment.rows), cv::Scalar(0, 0, 0), -1);
+//	double www = SPREADER_SIZE / Label_value; // [pixel]
+//	rectangle(laser_image_hsv_segment, cv::Rect(PCross.x + www, 0, laser_image_hsv_segment.cols, laser_image_hsv_segment.rows), cv::Scalar(0, 0, 0), -1);
+//
+//	// スキンプレート側のレーザー反射光を黒直線で塗りつぶしておく。（太さはテキトー）
+//	line(laser_image_hsv_segment, contoursP1, contoursP2, Scalar(0, 0, 0), 20, CV_AA);
+//	imwrite("laser_image_hsv_segment.png", laser_image_hsv_segment);
+//
+//	mask_image = LineMaskForDrawAxis(laser_image_hsv_segment, g_filter, www, false);
+//	FitLines2(mask_image, contoursP1, contoursP2, topResult1, topResult2, true, input_image_rgb);
+//	imwrite("SegMask2.png", mask_image);
+//
+//	labels.clear();
+//	mask_image = LineMaskForDetectSegmentEdge(laser_image_hsv_segment, g_filter, www, false);
+//	cv::imwrite("checkDuplicateResult.png", mask_image);
 //	checkDuplicate(mask_image, labels);
-	FitLines2(mask_image, contoursP1, contoursP2, topResult1, topResult2, false, input_image_rgb);
-	
-	output_image.setTo(Scalar(0, 0, 0));
-	input_image_rgb.copyTo(output_image, mask_image);
-	saveParameter(false);
-
-	//セグメント側
-	Mat laser_image_hsv_segment;
-
-	laser_image_hsv.copyTo(laser_image_hsv_segment);
-	rectangle(laser_image_hsv_segment, cv::Rect(0, 0, PCross.x, laser_image_hsv_segment.rows), cv::Scalar(0, 0, 0), -1);
-	double www = SPREADER_SIZE / Label_value; // [pixel]
-	rectangle(laser_image_hsv_segment, cv::Rect(PCross.x + www, 0, laser_image_hsv_segment.cols, laser_image_hsv_segment.rows), cv::Scalar(0, 0, 0), -1);
-
-	// スキンプレート側のレーザー反射光を黒直線で塗りつぶしておく。（太さはテキトー）
-	line(laser_image_hsv_segment, contoursP1, contoursP2, Scalar(0, 0, 0), 20, CV_AA);
-	imwrite("laser_image_hsv_segment.png", laser_image_hsv_segment);
-
-	mask_image = LineMaskForDrawAxis(laser_image_hsv_segment, g_filter, www, false);
-	FitLines2(mask_image, contoursP1, contoursP2, topResult1, topResult2, true, input_image_rgb);
-	imwrite("SegMask2.png", mask_image);
-
-	labels.clear();
-	mask_image = LineMaskForDetectSegmentEdge(laser_image_hsv_segment, g_filter, www, false);
-	cv::imwrite("checkDuplicateResult.png", mask_image);
-	checkDuplicate(mask_image, labels);
-
-	Mat labelsForSegement;
-	input_image_rgb.copyTo(labelsForSegement);
-	for (int ii = 0; ii < labels.size(); ii++) {
-		rectangle(labelsForSegement, Rect(labels[ii][0], labels[ii][1], (labels[ii][2] - labels[ii][0]), (labels[ii][3] - labels[ii][1])), cv::Scalar(0, 255, 255), 1);
-	}
-	imwrite("SegMask3.png", labelsForSegement);
-
-	output_image.setTo(Scalar(0, 0, 0));
-	input_image_rgb.copyTo(output_image, mask_image);
-	saveParameter(true);
-
-	result = pickupLine(topLine, underLine);
-	if (result.size() == 0) {
-		Calculation(0);
-	}
-	else {
-		int diff = Distance(result, PCross, PSegmentEdge, labels);
-		Calculation(diff);
-
-		input_image_rgb.copyTo(result_i);
-		for (int ii = 0; ii < labels.size(); ii++) {
-			cv::rectangle(result_i, Rect(labels[ii][0], labels[ii][1], (labels[ii][2] - labels[ii][0]), (labels[ii][3] - labels[ii][1])), cv::Scalar(0, 255, 255), 1);
-		}
-		cv::line(result_i, topResult1, topResult2, Scalar(255, 255, 0), 1, CV_AA);
-		cv::line(result_i, contoursP1, contoursP2, Scalar(255, 255, 0), 1, CV_AA);
-		cv::circle(result_i, PCross, 3, cv::Scalar(0, 0, 255), -1);
-		cv::circle(result_i, PSegmentEdge, 3, cv::Scalar(0, 0, 255), -1);
-		cv::imwrite("result.png", result_i);
-
-//		cv::imwrite("output.png", output_image);
-	}
+//
+//	Mat labelsForSegement;
+//	input_image_rgb.copyTo(labelsForSegement);
+//	for (int ii = 0; ii < labels.size(); ii++) {
+//		rectangle(labelsForSegement, Rect(labels[ii][0], labels[ii][1], (labels[ii][2] - labels[ii][0]), (labels[ii][3] - labels[ii][1])), cv::Scalar(0, 255, 255), 1);
+//	}
+//	imwrite("SegMask3.png", labelsForSegement);
+//
+//	output_image.setTo(Scalar(0, 0, 0));
+//	input_image_rgb.copyTo(output_image, mask_image);
+//	saveParameter(true);
+//
+//	result = pickupLine(topLine, underLine);
+//	if (result.size() == 0) {
+//		Calculation(0);
+//	}
+//	else {
+//		int diff = Distance(result, PCross, PSegmentEdge, labels);
+//		Calculation(diff);
+//
+//		input_image_rgb.copyTo(result_i);
+//		for (int ii = 0; ii < labels.size(); ii++) {
+//			cv::rectangle(result_i, Rect(labels[ii][0], labels[ii][1], (labels[ii][2] - labels[ii][0]), (labels[ii][3] - labels[ii][1])), cv::Scalar(0, 255, 255), 1);
+//		}
+//		cv::line(result_i, topResult1, topResult2, Scalar(255, 255, 0), 1, CV_AA);
+//		cv::line(result_i, contoursP1, contoursP2, Scalar(255, 255, 0), 1, CV_AA);
+//		cv::circle(result_i, PCross, 3, cv::Scalar(0, 0, 255), -1);
+//		cv::circle(result_i, PSegmentEdge, 3, cv::Scalar(0, 0, 255), -1);
+//		cv::imwrite("result.png", result_i);
+//
+////		cv::imwrite("output.png", output_image);
+//	}
 
 	return 0;
 }

@@ -13,7 +13,6 @@
 using namespace std;
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-using namespace cv;
 #pragma comment(lib,"opencv_world341.lib")
 #include <mutex>
 #include <chrono>
@@ -35,10 +34,19 @@ typedef struct _color_filter {
 
 extern color_filter g_filter;
 
-void FitLines(Mat fit, Point& contoursP1, Point& contoursP2, Point& topResult1, Point& topResult2, boolean first, Mat& input_image_rgb);
-void FitLines2(Mat fit, Point& contoursP1, Point& contoursP2, Point& topResult1, Point& topResult2, boolean first, Mat& input_image_rgb);
-Mat createMask(Mat laser_image_hsv, color_filter filter, boolean fine);
-Mat LineMaskForDrawAxis(Mat laser_image_hsv, color_filter filter, double min_contour_size, boolean fine);
-Mat LineMaskForDetectSegmentEdge(Mat laser_image_hsv, color_filter filter, double min_contour_size, boolean fine);
-int Distance(vector<Vec4i> a, Point& PCross, Point& PSegmentEdge, vector<Vec4i> mask);
-void checkDuplicate(Mat input_image, vector<Vec4i>& labels);
+typedef struct _contourEx {
+	vector<cv::Point> contour;
+	int size;
+	cv::RotatedRect rect;
+} contourEx;
+
+void FitLines(cv::Mat fit, cv::Point& contoursP1, cv::Point& contoursP2, cv::Point& topResult1, cv::Point& topResult2, boolean first, cv::Mat& input_image_rgb);
+void FitLines2(cv::Mat fit, cv::Point& contoursP1, cv::Point& contoursP2, cv::Point& topResult1, cv::Point& topResult2, boolean first, cv::Mat& input_image_rgb);
+cv::Mat createMask(cv::Mat laser_image_hsv, color_filter filter, boolean fine);
+cv::Mat LineMaskForDrawAxis(cv::Mat laser_image_hsv, color_filter filter, double min_contour_size, boolean fine);
+cv::Mat LineMaskForDetectSegmentEdge(cv::Mat laser_image_hsv, color_filter filter, double min_contour_size, boolean fine);
+int Distance(vector<cv::Vec4i> a, cv::Point& PCross, cv::Point& PSegmentEdge, vector<cv::Vec4i> mask);
+void checkDuplicate(cv::Mat input_image, vector<cv::Vec4i>& labels);
+
+cv::Mat filterImageByHSV(cv::Mat input_hsv, color_filter filter);
+vector<contourEx> findContourOfLaserReflection(cv::Mat input_hsv, double angle_min, double angle_max);
