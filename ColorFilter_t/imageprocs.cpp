@@ -673,19 +673,18 @@ vector<contourEx> findContourOfLaserReflection(cv::Mat input_hsv, double angle_m
 			c.contour.push_back(p);
 		} 
 		c.rect = cv::minAreaRect(c.contour);
-		// 十分な大きさがあって、主軸が指定された向きを向いているならば候補リストに加える
-		printf("rect.size,angle=%d, %6.3f\n", c.size, c.rect.angle);
-		if (c.size > MINIMAL_CONTOUR_SIZE && c.rect.angle > angle_min_degree && c.rect.angle < angle_max_degree) {
+		// 十分な大きさがあって、主軸が指定された向きを向いていて縦横比が大きいならば候補リストに加える
+		if (c.size > MINIMAL_CONTOUR_SIZE 
+			&& c.rect.angle > angle_min_degree 
+			&& c.rect.angle < angle_max_degree
+			&& c.rect.size.width / c.rect.size.height > 7.) {
+			printf("rect.width,height,angle=%f, %f, %6.3f\n", c.rect.size.width, c.rect.size.height, c.rect.angle);
 			contours.push_back(c);
-			// 最大？
-			if (c.size > largest_size) {
-				largest_size = c.size;
-				largest_contour_ptr = &c;
-			}
 		}
 	}
 	return contours;
-
-
 }
+
+
+
 

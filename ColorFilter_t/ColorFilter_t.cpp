@@ -771,23 +771,54 @@ int main(int argc, char** argv)
 	//差分(減算合成)
 	addWeighted(result_i, 1.0, result_l, -1.0, 0.0, laser_image);
 	cv::imwrite("LaserImage.png", laser_image);
-	cvtColor(laser_image, laser_image_hsv, CV_BGR2HSV, 3);
+	cv::cvtColor(laser_image, laser_image_hsv, CV_BGR2HSV, 3);
 
 	/***********************************************/
 	/* pass 1 画像全体をまとめて解析               */
 	/***********************************************/
-	Mat filteredImage;
 	Mat contourImage = Mat();
 	vector<contourEx> contours;
 
 	vector<contourEx> contoursOnSkinplates, contoursOnSegment,theContourOnSkinplate, theContourOnSegment;
 
-	for (int v_min_slider = 255; v_min_slider > 0; v_min_slider -= 10) {
-		contourEx contourOnSkinplate, contourOnSegment;
+	for (int v_min_slider = 255; v_min_slider > 20; v_min_slider -= 10) {
+		printf("> v_min_slider=%d\n", v_min_slider);
 		g_filter.v_min = v_min_slider;
-		filteredImage = filterImageByHSV(laser_image_hsv, g_filter);
+		// HSV 指定してフィルタリングしてマスクを作成
+		Mat filteredMask = filterImageByHSV(laser_image_hsv, g_filter);
+		// 現画像からマスク部分だけを切り出してグレイスケール画像に変換
+		Mat laser_image_bgr, laser_image_gray;
+		laser_image.copyTo(laser_image_bgr, filteredMask);
+		cv::cvtColor(laser_image_bgr, laser_image_gray, cv::COLOR_BGR2GRAY);
+//		imwrite("laser_image_gray.png", laser_image_gray);
+		/*
+		void cv::adaptiveThreshold(
+			// 入力画像
+			cv::InputArray  src,
+			// 出力画像
+			cv::OutputArray dst,
+			// 2値に閾値処理する際、閾値以上のピクセルに割り当てる値
+			double          maxValue,
+			// 加重平均の取り方
+			int             adaptiveMethod,
+			// 使用する閾値の種類
+			int             thresholdType,
+			// 「Pの周囲n*nの領域にあるピクセル」のnになる
+			int             blockSize,
+			// 引き算する定数
+			double          C
+		)
+		*/
+		Mat laser_image_binary;
+		cv::adaptiveThreshold(laser_image_gray, laser_image_binary, 255, 
+			cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 9, 0);
+		std::string fname = "laser_image_binary";
+		fname += to_string(v_min_slider);
+		fname += ".png";
+		cv::imwrite(fname, laser_image_binary);
 
-		contours = findContourOfLaserReflection(filteredImage, -30.0, -10.0);
+		contourEx contourOnSkinplate, contourOnSegment;
+		contours = findContourOfLaserReflection(laser_image_binary, -30.0, -10.0);
 		laser_image.copyTo(contourImage);
 		for (auto c : contours) 
 		{
@@ -796,17 +827,18 @@ int main(int argc, char** argv)
 			for (int i = 0; i < 4; i++) {
 				cv::line(contourImage, vertices[i], vertices[(i + 1) % 4], cv::Scalar(0, 255, 255));
 			}
+			contoursOnSkinplates.push_back(contourOnSkinplate);
 		}
-		std::string fname = "ContourSkinplate";
+		fname = "ContourSkinplate";
 		fname += to_string(v_min_slider);
 		fname += ".png";
 		cv::imwrite(fname, contourImage);
-		//		contoursOnSkinplates.push_back(contourOnSkinplate);
 //		theContourOnSkinplate = selectBestContourOnSkinplate(contoursOnSkinplates);
 
 //		findContourOfLaserReflection(filteredImage, -5.0, 5.0);
 //		theContourOnSegment = selectBestContourOnSegment(contourOnSegment);
 //		contoursOnSegment.push_back(contourOnSegment);
+
 	}
 
 
